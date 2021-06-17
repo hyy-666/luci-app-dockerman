@@ -2,7 +2,8 @@
 
 START=99
 
-config_load docker
+config_load dockerd
+config_get daemon_ea "dockerman" daemon_ea
 
 init_dockerman_chain(){
 	iptables -N DOCKER-MAN >/dev/null 2>&1
@@ -16,7 +17,7 @@ add_allowed_interface(){
 }
 
 add_allowed_ip(){
-	iptables -A DOCKER-MAN -d $1 -o docker0 -j RETURN
+	iptables -A DOCKER-MAN -d $1 -o docker0 -j ACCEPT
 }
 
 handle_allowed_interface(){
@@ -30,6 +31,8 @@ handle_allowed_interface(){
 start(){
 	[ ! -x "/etc/init.d/dockerd" ] && return 0
 	init_dockerman_chain
-	handle_allowed_interface
-	lua /usr/share/dockerman/dockerd-ac.lua
+	if [ -n "$daemon_ea" ]; then
+		handle_allowed_interface
+		lua /usr/share/dockerman/dockerd-ac.lua
+	fi
 }
